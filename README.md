@@ -6,6 +6,7 @@ This project uses Terraform to deploy a three-tier application infrastructure (W
 2.  **`02-compute-infra`**: Launches the EC2 instances for each tier into the network created in the first stage, associating them with the appropriate security groups and Elastic IP.
 
 ## Project Structure
+![image](https://github.com/user-attachments/assets/2ff3e298-ffa8-42d8-a2fb-c323bc2729b0)
 
 
 ## Prerequisites
