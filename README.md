@@ -8,6 +8,7 @@ This project uses Terraform to deploy a three-tier application infrastructure (W
 ## Project Structure
 
 ## Project Structure
+![image](https://github.com/user-attachments/assets/08bddc4c-0d2c-401e-bd8d-05590003d3bf)
 
 
 
