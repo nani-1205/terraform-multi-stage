@@ -5,7 +5,7 @@ This project uses Terraform to deploy a three-tier application infrastructure (W
 1.  **01-network-infra**: Provisions the core networking components (VPC, Subnet, Internet Gateway, Route Tables, Security Groups, and an Elastic IP for the web server).
 2.  **02-compute-infra**: Launches the EC2 instances for each tier into the network created in the first stage, associating them with the appropriate security groups and Elastic IP.
 
-## Project Structure
+
 
 ## Project Structure
 ![image](https://github.com/user-attachments/assets/08bddc4c-0d2c-401e-bd8d-05590003d3bf)
