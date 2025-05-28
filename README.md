@@ -8,18 +8,7 @@ This project uses Terraform to deploy a three-tier application infrastructure (W
 ## Project Structure
 
 ## Project Structure
-terraform-multi-stage/
-├── 01-network-infra/
-│   ├── main.tf
-│   ├── variables.tf
-│   ├── outputs.tf
-│   └── provider.tf
-├── 02-compute-infra/
-│   ├── main.tf
-│   ├── variables.tf
-│   ├── outputs.tf
-│   └── provider.tf
-└── README.md
+
 
 
 ## Prerequisites
