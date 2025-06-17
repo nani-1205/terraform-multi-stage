@@ -84,20 +84,14 @@ variable "web_app_eip_name_tag" {
   default     = "WEB-APP-EIP"
 }
 
-variable "sns_topic_name_for_alarms" {
-  description = "Name for the SNS topic that will receive CloudWatch alarm notifications."
+variable "network_sns_topic_name" {
+  description = "Name for the SNS topic for Network infrastructure alarms."
   type        = string
-  default     = "my-app-alarms-topic"
+  default     = "my-app-network-alarms-topic"
 }
 
-variable "sns_topic_name_tag" {
-  description = "Name tag for the SNS topic (used for lookup by compute script)"
-  type        = string
-  default     = "my-app-alarms-sns-topic"
-}
-
-variable "alarm_notification_emails" {
-  description = "A list of email addresses to subscribe to the SNS alarm topic."
+variable "network_alarm_notification_emails" {
+  description = "A list of email addresses to subscribe to the Network SNS alarm topic."
   type        = list(string)
   default     = [
     "prabhakararao.nandigrama@assettl.com",

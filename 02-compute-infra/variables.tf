@@ -42,10 +42,19 @@ variable "web_app_eip_name_tag_to_lookup" {
   default     = "WEB-APP-EIP"
 }
 
-variable "sns_topic_arn_to_use" {
-  description = "The ARN of the SNS topic to send alarm notifications to. Get this from 01-network-infra output."
+variable "compute_sns_topic_name" {
+  description = "Name for the SNS topic for Compute infrastructure alarms."
   type        = string
-  # No default, must be provided.
+  default     = "my-app-compute-alarms-topic"
+}
+
+variable "compute_alarm_notification_emails" {
+  description = "A list of email addresses to subscribe to the Compute SNS alarm topic."
+  type        = list(string)
+  default     = [
+    "prabhakararao.nandigrama@assettl.com",
+    "yetukurisaijagan@gmail.com"
+  ]
 }
 
 variable "key_pair_name" {
@@ -79,28 +88,41 @@ variable "db_instance_type" {
 }
 
 # --- CloudWatch Alarm Thresholds ---
-variable "cpu_utilization_threshold" {
-  description = "CPU utilization threshold percentage for alarms"
+variable "cpu_utilization_threshold_critical" {
+  description = "CPU utilization critical threshold percentage"
+  type        = number
+  default     = 90 
+}
+
+variable "cpu_utilization_threshold_warning" {
+  description = "CPU utilization warning threshold percentage"
   type        = number
   default     = 75 
 }
 
-variable "memory_utilization_threshold" {
-  description = "Memory utilization threshold percentage for alarms (requires CloudWatch Agent)"
+variable "memory_utilization_threshold_critical" {
+  description = "Memory utilization critical threshold percentage (requires CloudWatch Agent)"
   type        = number
-  default     = 80 
+  default     = 90
 }
+
+variable "memory_utilization_threshold_warning" { # Added for consistency
+  description = "Memory utilization warning threshold percentage (requires CloudWatch Agent)"
+  type        = number
+  default     = 75
+}
+
 
 variable "disk_write_ops_threshold_per_second" { 
   description = "Disk Write Operations threshold (Count/Second) for alarms"
   type        = number
-  default     = 1000 
+  default     = 500 # Example value, adjust based on your needs
 }
 
 variable "network_out_bytes_threshold_per_second" { 
   description = "Network Outgoing Bytes threshold (Bytes/Second) for alarms"
   type        = number
-  default     = 500000000 
+  default     = 100 * 1024 * 1024 # 100 MB/s, example value
 }
 
 variable "alarm_evaluation_periods" {

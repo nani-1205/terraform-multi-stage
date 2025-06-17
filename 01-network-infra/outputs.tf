@@ -65,12 +65,7 @@ output "web_app_eip_name_tag_value" {
   value       = var.web_app_eip_name_tag
 }
 
-output "sns_topic_arn_for_alarms" {
-  description = "ARN of the SNS topic for CloudWatch alarms"
-  value       = aws_sns_topic.alarms.arn
-}
-
-output "sns_topic_name_tag_value" {
-  description = "The Name tag value of the SNS topic (for lookup)"
-  value       = var.sns_topic_name_tag
+output "network_sns_topic_arn" {
+  description = "ARN of the SNS topic for Network infrastructure alarms"
+  value       = aws_sns_topic.network_alarms.arn
 }

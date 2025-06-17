@@ -44,3 +44,8 @@ output "database_private_ip" {
   description = "Private IP of the Database EC2 instance"
   value       = aws_instance.database.private_ip
 }
+
+output "compute_sns_topic_arn" {
+  description = "ARN of the SNS topic for Compute infrastructure alarms"
+  value       = aws_sns_topic.compute_alarms.arn
+}

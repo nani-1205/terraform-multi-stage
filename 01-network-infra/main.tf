@@ -135,18 +135,17 @@ resource "aws_eip" "web_app_eip" {
   tags = { Name = var.web_app_eip_name_tag }
 }
 
-# --- SNS TOPIC FOR ALARMS ---
-resource "aws_sns_topic" "alarms" {
-  name = var.sns_topic_name_for_alarms
+# --- SNS TOPIC FOR NETWORK ALARMS ---
+resource "aws_sns_topic" "network_alarms" {
+  name = var.network_sns_topic_name
   tags = {
-    Name = var.sns_topic_name_tag 
+    Name = var.network_sns_topic_name # Tagging for easier identification and consistency
   }
 }
 
-# --- SNS Email Subscriptions ---
-resource "aws_sns_topic_subscription" "email_subscriptions" {
-  for_each  = toset(var.alarm_notification_emails) 
-  topic_arn = aws_sns_topic.alarms.arn
+resource "aws_sns_topic_subscription" "network_email_subscriptions" {
+  for_each  = toset(var.network_alarm_notification_emails)
+  topic_arn = aws_sns_topic.network_alarms.arn
   protocol  = "email"
-  endpoint  = each.value 
+  endpoint  = each.value
 }
