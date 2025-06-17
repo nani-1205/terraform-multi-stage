@@ -6,8 +6,6 @@ variable "aws_region" {
   default     = "me-central-1"
 }
 
-# --- Variables for looking up Network Resources by Name Tag ---
-# These should match the *Name tag values* used in the 01-network-infra script
 variable "vpc_name_tag_to_lookup" {
   description = "The 'Name' tag of the VPC to use"
   type        = string
@@ -44,7 +42,12 @@ variable "web_app_eip_name_tag_to_lookup" {
   default     = "WEB-APP-EIP"
 }
 
-# --- EC2 Instance Configuration ---
+variable "sns_topic_name_tag_to_lookup" {
+  description = "The 'Name' tag of the SNS topic to send alarm notifications to"
+  type        = string
+  default     = "my-app-alarms-sns-topic"
+}
+
 variable "key_pair_name" {
   description = "Name of the EC2 Key Pair for instances"
   type        = string
@@ -54,7 +57,7 @@ variable "key_pair_name" {
 variable "ami_id" {
   description = "AMI ID for the EC2 instances"
   type        = string
-  default     = "ami-0178175c071ffc9e8" # Amazon Linux 2 in me-central-1
+  default     = "ami-0178175c071ffc9e8" 
 }
 
 variable "web_app_instance_type" {
@@ -73,4 +76,41 @@ variable "db_instance_type" {
   description = "Instance type for DATABASE"
   type        = string
   default     = "t3.xlarge"
+}
+
+# --- CloudWatch Alarm Thresholds ---
+variable "cpu_utilization_threshold" {
+  description = "CPU utilization threshold percentage for alarms"
+  type        = number
+  default     = 75 
+}
+
+variable "memory_utilization_threshold" {
+  description = "Memory utilization threshold percentage for alarms (requires CloudWatch Agent)"
+  type        = number
+  default     = 80 
+}
+
+variable "disk_write_ops_threshold_per_second" { # Renamed for clarity
+  description = "Disk Write Operations threshold (Count/Second) for alarms"
+  type        = number
+  default     = 1000 
+}
+
+variable "network_out_bytes_threshold_per_second" { # Renamed for clarity
+  description = "Network Outgoing Bytes threshold (Bytes/Second) for alarms"
+  type        = number
+  default     = 500000000 
+}
+
+variable "alarm_evaluation_periods" {
+  description = "Number of periods to evaluate for the alarm state"
+  type        = number
+  default     = 2
+}
+
+variable "alarm_period_seconds" {
+  description = "Duration in seconds over which the statistic is applied"
+  type        = number
+  default     = 300 # 5 minutes
 }

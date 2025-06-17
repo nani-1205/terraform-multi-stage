@@ -11,7 +11,7 @@ resource "aws_vpc" "main" {
 # --- Internet Gateway ---
 resource "aws_internet_gateway" "gw" {
   vpc_id = aws_vpc.main.id
-  tags   = { Name = "${var.project_name}-igw" } # Tagged for easier identification
+  tags   = { Name = "${var.project_name}-igw" } 
 }
 
 # --- Public Subnet ---
@@ -19,7 +19,7 @@ resource "aws_subnet" "public" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = var.public_subnet_cidr_block
   availability_zone       = var.availability_zone
-  map_public_ip_on_launch = true # Important for instances needing public IPs without EIPs
+  map_public_ip_on_launch = true 
   tags                    = { Name = var.public_subnet_name_tag }
 }
 
@@ -41,7 +41,7 @@ resource "aws_route_table_association" "public" {
 
 # --- Web App Security Group ---
 resource "aws_security_group" "web_app_sg" {
-  name        = var.web_app_sg_name_tag # Using the tag value also as SG name for easier lookup
+  name        = var.web_app_sg_name_tag 
   description = "Allow HTTP, HTTPS, and SSH for Web App"
   vpc_id      = aws_vpc.main.id
   ingress {
@@ -121,14 +121,6 @@ resource "aws_security_group" "db_sg" {
     protocol        = "tcp"
     security_groups = [aws_security_group.backend_sg.id]
   }
-  # Optional: Direct DB access from your IP (use with caution)
-  # ingress {
-  #   description = "Database port from My IP (direct admin)"
-  #   from_port   = var.db_port
-  #   to_port     = var.db_port
-  #   protocol    = "tcp"
-  #   cidr_blocks = [var.my_ip_cidr]
-  # }
   egress {
     from_port   = 0
     to_port     = 0
@@ -139,6 +131,14 @@ resource "aws_security_group" "db_sg" {
 }
 
 # --- Elastic IP for WEB-APP ---
-resource "aws_eip" "web_app_eip" { # Renamed from web_app_new_eip for clarity
+resource "aws_eip" "web_app_eip" { 
   tags = { Name = var.web_app_eip_name_tag }
+}
+
+# --- SNS TOPIC FOR ALARMS ---
+resource "aws_sns_topic" "alarms" {
+  name = var.sns_topic_name_for_alarms
+  tags = {
+    Name = var.sns_topic_name_tag 
+  }
 }

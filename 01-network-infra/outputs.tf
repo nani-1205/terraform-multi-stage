@@ -52,7 +52,7 @@ output "db_sg_name_tag_value" {
 
 output "web_app_eip_allocation_id" {
   description = "Allocation ID of the Web App EIP"
-  value       = aws_eip.web_app_eip.id # This is the allocation_id
+  value       = aws_eip.web_app_eip.id
 }
 
 output "web_app_eip_public_ip" {
@@ -63,4 +63,14 @@ output "web_app_eip_public_ip" {
 output "web_app_eip_name_tag_value" {
   description = "The Name tag value of the Web App EIP (for lookup)"
   value       = var.web_app_eip_name_tag
+}
+
+output "sns_topic_arn_for_alarms" {
+  description = "ARN of the SNS topic for CloudWatch alarms"
+  value       = aws_sns_topic.alarms.arn
+}
+
+output "sns_topic_name_tag_value" {
+  description = "The Name tag value of the SNS topic (for lookup)"
+  value       = var.sns_topic_name_tag
 }

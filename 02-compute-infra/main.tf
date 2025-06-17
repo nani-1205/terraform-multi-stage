@@ -1,33 +1,18 @@
 # 02-compute-infra/main.tf
 
-# --- Data Sources to look up existing network resources ---
+# --- Data Sources to look up existing network and SNS resources ---
 data "aws_vpc" "selected_vpc" {
-  tags = {
-    Name = var.vpc_name_tag_to_lookup
-  }
+  tags = { Name = var.vpc_name_tag_to_lookup }
 }
 
 data "aws_subnet" "selected_public_subnet" {
   vpc_id = data.aws_vpc.selected_vpc.id
-  tags = {
-    Name = var.public_subnet_name_tag_to_lookup
-  }
-  # filter { # Alternative if tag is not unique enough within VPC
-  #   name   = "tag:Name"
-  #   values = [var.public_subnet_name_tag_to_lookup]
-  # }
-  # filter {
-  #   name   = "vpc-id"
-  #   values = [data.aws_vpc.selected_vpc.id]
-  # }
+  tags   = { Name = var.public_subnet_name_tag_to_lookup }
 }
 
 data "aws_security_group" "web_app_sg" {
-  name   = var.web_app_sg_name_tag_to_lookup # Assumes SG name matches the tag
+  name   = var.web_app_sg_name_tag_to_lookup
   vpc_id = data.aws_vpc.selected_vpc.id
-  # tags = { # Alternative lookup by tag if name is not reliable
-  #   Name = var.web_app_sg_name_tag_to_lookup
-  # }
 }
 
 data "aws_security_group" "backend_sg" {
@@ -41,8 +26,13 @@ data "aws_security_group" "db_sg" {
 }
 
 data "aws_eip" "web_app_eip" {
-  tags = {
-    Name = var.web_app_eip_name_tag_to_lookup
+  tags = { Name = var.web_app_eip_name_tag_to_lookup }
+}
+
+data "aws_sns_topic" "alarms_topic" {
+  filter {
+    name   = "tag:Name"
+    values = [var.sns_topic_name_tag_to_lookup]
   }
 }
 
@@ -53,7 +43,7 @@ resource "aws_instance" "web_app" {
   key_name                     = var.key_pair_name
   subnet_id                    = data.aws_subnet.selected_public_subnet.id
   vpc_security_group_ids       = [data.aws_security_group.web_app_sg.id]
-  associate_public_ip_address  = false # EIP will be associated
+  associate_public_ip_address  = false
   root_block_device {
     volume_size           = 100
     volume_type           = "gp3"
@@ -64,7 +54,7 @@ resource "aws_instance" "web_app" {
 
 resource "aws_eip_association" "web_app_eip_assoc" {
   instance_id   = aws_instance.web_app.id
-  allocation_id = data.aws_eip.web_app_eip.id # Use allocation_id (which is .id from data source)
+  allocation_id = data.aws_eip.web_app_eip.id
 }
 
 resource "aws_instance" "backend" {
@@ -73,7 +63,6 @@ resource "aws_instance" "backend" {
   key_name                     = var.key_pair_name
   subnet_id                    = data.aws_subnet.selected_public_subnet.id
   vpc_security_group_ids       = [data.aws_security_group.backend_sg.id]
-  # associate_public_ip_address = true # Implicit from subnet setting
   root_block_device {
     volume_size           = 100
     volume_type           = "gp3"
@@ -88,7 +77,6 @@ resource "aws_instance" "database" {
   key_name                     = var.key_pair_name
   subnet_id                    = data.aws_subnet.selected_public_subnet.id
   vpc_security_group_ids       = [data.aws_security_group.db_sg.id]
-  # associate_public_ip_address = true # Implicit from subnet setting
   root_block_device {
     volume_size           = 150
     volume_type           = "gp3"
@@ -96,3 +84,121 @@ resource "aws_instance" "database" {
   }
   tags = { Name = "DATABASE", Tier = "Database" }
 }
+
+# ------------------------------------------------------------------------------
+# CLOUDWATCH ALARMS
+# ------------------------------------------------------------------------------
+
+locals {
+  alarm_actions = [data.aws_sns_topic.alarms_topic.arn]
+}
+
+# --- Alarms for WEB-APP Instance ---
+resource "aws_cloudwatch_metric_alarm" "web_app_cpu" {
+  alarm_name          = "WebApp-CPU-Utilization-High"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = var.alarm_evaluation_periods
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/EC2"
+  period              = var.alarm_period_seconds
+  statistic           = "Average"
+  threshold           = var.cpu_utilization_threshold
+  alarm_description   = "This metric monitors EC2 CPU utilization for WEB-APP."
+  dimensions = { InstanceId = aws_instance.web_app.id }
+  alarm_actions = local.alarm_actions
+  ok_actions    = local.alarm_actions 
+}
+
+resource "aws_cloudwatch_metric_alarm" "web_app_memory" {
+  alarm_name          = "WebApp-Memory-Utilization-High"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = var.alarm_evaluation_periods
+  metric_name         = "mem_used_percent" 
+  namespace           = "CWAgent"          
+  period              = var.alarm_period_seconds
+  statistic           = "Average"
+  threshold           = var.memory_utilization_threshold
+  alarm_description   = "This metric monitors EC2 Memory utilization for WEB-APP (requires CloudWatch Agent)."
+  dimensions = { InstanceId = aws_instance.web_app.id }
+  alarm_actions             = local.alarm_actions
+  ok_actions                = local.alarm_actions
+  treat_missing_data        = "missing"
+}
+
+resource "aws_cloudwatch_metric_alarm" "web_app_disk_write_ops" {
+  alarm_name          = "WebApp-Disk-WriteOps-High"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = var.alarm_evaluation_periods
+  metric_name         = "DiskWriteOps" 
+  namespace           = "AWS/EC2"      
+  period              = var.alarm_period_seconds
+  statistic           = "Sum" 
+  threshold           = var.disk_write_ops_threshold_per_second * var.alarm_period_seconds 
+  alarm_description   = "This metric monitors EC2 Disk Write Ops for WEB-APP."
+  dimensions = { InstanceId = aws_instance.web_app.id }
+  alarm_actions = local.alarm_actions
+  ok_actions    = local.alarm_actions
+}
+
+resource "aws_cloudwatch_metric_alarm" "web_app_network_out" {
+  alarm_name          = "WebApp-NetworkOut-High"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = var.alarm_evaluation_periods
+  metric_name         = "NetworkOut"
+  namespace           = "AWS/EC2"
+  period              = var.alarm_period_seconds
+  statistic           = "Sum" 
+  threshold           = var.network_out_bytes_threshold_per_second * var.alarm_period_seconds
+  alarm_description   = "This metric monitors EC2 Network Outgoing Bytes for WEB-APP."
+  dimensions = { InstanceId = aws_instance.web_app.id }
+  alarm_actions = local.alarm_actions
+  ok_actions    = local.alarm_actions
+}
+
+
+# TODO: Alarms for BACKEND Instance 
+# Copy the alarm blocks from WEB-APP and modify:
+# - alarm_name (e.g., "Backend-CPU-Utilization-High")
+# - alarm_description
+# - dimensions = { InstanceId = aws_instance.backend.id }
+
+# Example placeholder for BACKEND CPU (you need to complete this and add others)
+resource "aws_cloudwatch_metric_alarm" "backend_cpu" {
+  alarm_name          = "Backend-CPU-Utilization-High"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = var.alarm_evaluation_periods
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/EC2"
+  period              = var.alarm_period_seconds
+  statistic           = "Average"
+  threshold           = var.cpu_utilization_threshold
+  alarm_description   = "This metric monitors EC2 CPU utilization for BACKEND."
+  dimensions = { InstanceId = aws_instance.backend.id }
+  alarm_actions = local.alarm_actions
+  ok_actions    = local.alarm_actions
+}
+# ... Add Memory, Disk, Network alarms for BACKEND here ...
+
+
+# TODO: Alarms for DATABASE Instance
+# Copy the alarm blocks from WEB-APP and modify:
+# - alarm_name (e.g., "Database-CPU-Utilization-High")
+# - alarm_description
+# - dimensions = { InstanceId = aws_instance.database.id }
+
+# Example placeholder for DATABASE CPU (you need to complete this and add others)
+resource "aws_cloudwatch_metric_alarm" "database_cpu" {
+  alarm_name          = "Database-CPU-Utilization-High"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = var.alarm_evaluation_periods
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/EC2"
+  period              = var.alarm_period_seconds
+  statistic           = "Average"
+  threshold           = var.cpu_utilization_threshold
+  alarm_description   = "This metric monitors EC2 CPU utilization for DATABASE."
+  dimensions = { InstanceId = aws_instance.database.id }
+  alarm_actions = local.alarm_actions
+  ok_actions    = local.alarm_actions
+}
+# ... Add Memory, Disk, Network alarms for DATABASE here ...

@@ -7,7 +7,7 @@ output "web_app_instance_id" {
 
 output "web_app_public_ip_from_eip" {
   description = "Public IP of the WEB-APP instance (from associated EIP)"
-  value       = data.aws_eip.web_app_eip.public_ip # Accessing the EIP's public_ip via data source
+  value       = data.aws_eip.web_app_eip.public_ip
 }
 
 output "web_app_private_ip" {

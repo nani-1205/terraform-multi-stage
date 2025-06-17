@@ -53,7 +53,7 @@ variable "db_port" {
 variable "vpc_name_tag" {
   description = "Name tag for the VPC (used for lookup)"
   type        = string
-  default     = "my-app-vpc" # Ensure this is unique if you have other VPCs
+  default     = "my-app-vpc"
 }
 
 variable "public_subnet_name_tag" {
@@ -84,4 +84,16 @@ variable "web_app_eip_name_tag" {
   description = "Name tag for the Web App Elastic IP (used for lookup)"
   type        = string
   default     = "WEB-APP-EIP"
+}
+
+variable "sns_topic_name_for_alarms" {
+  description = "Name for the SNS topic that will receive CloudWatch alarm notifications."
+  type        = string
+  default     = "my-app-alarms-topic"
+}
+
+variable "sns_topic_name_tag" {
+  description = "Name tag for the SNS topic (used for lookup by compute script)"
+  type        = string
+  default     = "my-app-alarms-sns-topic"
 }
