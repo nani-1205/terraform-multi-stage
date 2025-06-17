@@ -142,3 +142,11 @@ resource "aws_sns_topic" "alarms" {
     Name = var.sns_topic_name_tag 
   }
 }
+
+# --- SNS Email Subscriptions ---
+resource "aws_sns_topic_subscription" "email_subscriptions" {
+  for_each  = toset(var.alarm_notification_emails) 
+  topic_arn = aws_sns_topic.alarms.arn
+  protocol  = "email"
+  endpoint  = each.value 
+}

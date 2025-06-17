@@ -42,10 +42,10 @@ variable "web_app_eip_name_tag_to_lookup" {
   default     = "WEB-APP-EIP"
 }
 
-variable "sns_topic_name_tag_to_lookup" {
-  description = "The 'Name' tag of the SNS topic to send alarm notifications to"
+variable "sns_topic_arn_to_use" {
+  description = "The ARN of the SNS topic to send alarm notifications to. Get this from 01-network-infra output."
   type        = string
-  default     = "my-app-alarms-sns-topic"
+  # No default, must be provided.
 }
 
 variable "key_pair_name" {
@@ -91,13 +91,13 @@ variable "memory_utilization_threshold" {
   default     = 80 
 }
 
-variable "disk_write_ops_threshold_per_second" { # Renamed for clarity
+variable "disk_write_ops_threshold_per_second" { 
   description = "Disk Write Operations threshold (Count/Second) for alarms"
   type        = number
   default     = 1000 
 }
 
-variable "network_out_bytes_threshold_per_second" { # Renamed for clarity
+variable "network_out_bytes_threshold_per_second" { 
   description = "Network Outgoing Bytes threshold (Bytes/Second) for alarms"
   type        = number
   default     = 500000000 
@@ -112,5 +112,5 @@ variable "alarm_evaluation_periods" {
 variable "alarm_period_seconds" {
   description = "Duration in seconds over which the statistic is applied"
   type        = number
-  default     = 300 # 5 minutes
+  default     = 300 
 }

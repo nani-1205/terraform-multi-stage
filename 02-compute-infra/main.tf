@@ -29,13 +29,6 @@ data "aws_eip" "web_app_eip" {
   tags = { Name = var.web_app_eip_name_tag_to_lookup }
 }
 
-data "aws_sns_topic" "alarms_topic" {
-  filter {
-    name   = "tag:Name"
-    values = [var.sns_topic_name_tag_to_lookup]
-  }
-}
-
 # --- EC2 Instances ---
 resource "aws_instance" "web_app" {
   ami                          = var.ami_id
@@ -90,7 +83,7 @@ resource "aws_instance" "database" {
 # ------------------------------------------------------------------------------
 
 locals {
-  alarm_actions = [data.aws_sns_topic.alarms_topic.arn]
+  alarm_actions = [var.sns_topic_arn_to_use]
 }
 
 # --- Alarms for WEB-APP Instance ---
@@ -155,14 +148,7 @@ resource "aws_cloudwatch_metric_alarm" "web_app_network_out" {
   ok_actions    = local.alarm_actions
 }
 
-
-# TODO: Alarms for BACKEND Instance 
-# Copy the alarm blocks from WEB-APP and modify:
-# - alarm_name (e.g., "Backend-CPU-Utilization-High")
-# - alarm_description
-# - dimensions = { InstanceId = aws_instance.backend.id }
-
-# Example placeholder for BACKEND CPU (you need to complete this and add others)
+# --- Alarms for BACKEND Instance ---
 resource "aws_cloudwatch_metric_alarm" "backend_cpu" {
   alarm_name          = "Backend-CPU-Utilization-High"
   comparison_operator = "GreaterThanOrEqualToThreshold"
@@ -173,20 +159,58 @@ resource "aws_cloudwatch_metric_alarm" "backend_cpu" {
   statistic           = "Average"
   threshold           = var.cpu_utilization_threshold
   alarm_description   = "This metric monitors EC2 CPU utilization for BACKEND."
-  dimensions = { InstanceId = aws_instance.backend.id }
-  alarm_actions = local.alarm_actions
-  ok_actions    = local.alarm_actions
+  dimensions          = { InstanceId = aws_instance.backend.id }
+  alarm_actions       = local.alarm_actions
+  ok_actions          = local.alarm_actions
 }
-# ... Add Memory, Disk, Network alarms for BACKEND here ...
 
+resource "aws_cloudwatch_metric_alarm" "backend_memory" {
+  alarm_name          = "Backend-Memory-Utilization-High"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = var.alarm_evaluation_periods
+  metric_name         = "mem_used_percent"
+  namespace           = "CWAgent"
+  period              = var.alarm_period_seconds
+  statistic           = "Average"
+  threshold           = var.memory_utilization_threshold
+  alarm_description   = "This metric monitors EC2 Memory utilization for BACKEND (requires CloudWatch Agent)."
+  dimensions          = { InstanceId = aws_instance.backend.id }
+  alarm_actions       = local.alarm_actions
+  ok_actions          = local.alarm_actions
+  treat_missing_data  = "missing"
+}
 
-# TODO: Alarms for DATABASE Instance
-# Copy the alarm blocks from WEB-APP and modify:
-# - alarm_name (e.g., "Database-CPU-Utilization-High")
-# - alarm_description
-# - dimensions = { InstanceId = aws_instance.database.id }
+resource "aws_cloudwatch_metric_alarm" "backend_disk_write_ops" {
+  alarm_name          = "Backend-Disk-WriteOps-High"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = var.alarm_evaluation_periods
+  metric_name         = "DiskWriteOps"
+  namespace           = "AWS/EC2"
+  period              = var.alarm_period_seconds
+  statistic           = "Sum"
+  threshold           = var.disk_write_ops_threshold_per_second * var.alarm_period_seconds
+  alarm_description   = "This metric monitors EC2 Disk Write Ops for BACKEND."
+  dimensions          = { InstanceId = aws_instance.backend.id }
+  alarm_actions       = local.alarm_actions
+  ok_actions          = local.alarm_actions
+}
 
-# Example placeholder for DATABASE CPU (you need to complete this and add others)
+resource "aws_cloudwatch_metric_alarm" "backend_network_out" {
+  alarm_name          = "Backend-NetworkOut-High"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = var.alarm_evaluation_periods
+  metric_name         = "NetworkOut"
+  namespace           = "AWS/EC2"
+  period              = var.alarm_period_seconds
+  statistic           = "Sum"
+  threshold           = var.network_out_bytes_threshold_per_second * var.alarm_period_seconds
+  alarm_description   = "This metric monitors EC2 Network Outgoing Bytes for BACKEND."
+  dimensions          = { InstanceId = aws_instance.backend.id }
+  alarm_actions       = local.alarm_actions
+  ok_actions          = local.alarm_actions
+}
+
+# --- Alarms for DATABASE Instance ---
 resource "aws_cloudwatch_metric_alarm" "database_cpu" {
   alarm_name          = "Database-CPU-Utilization-High"
   comparison_operator = "GreaterThanOrEqualToThreshold"
@@ -197,8 +221,53 @@ resource "aws_cloudwatch_metric_alarm" "database_cpu" {
   statistic           = "Average"
   threshold           = var.cpu_utilization_threshold
   alarm_description   = "This metric monitors EC2 CPU utilization for DATABASE."
+  dimensions          = { InstanceId = aws_instance.database.id }
+  alarm_actions       = local.alarm_actions
+  ok_actions          = local.alarm_actions
+}
+
+resource "aws_cloudwatch_metric_alarm" "database_memory" {
+  alarm_name          = "Database-Memory-Utilization-High"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = var.alarm_evaluation_periods
+  metric_name         = "mem_used_percent"
+  namespace           = "CWAgent"
+  period              = var.alarm_period_seconds
+  statistic           = "Average"
+  threshold           = var.memory_utilization_threshold
+  alarm_description   = "This metric monitors EC2 Memory utilization for DATABASE (requires CloudWatch Agent)."
+  dimensions          = { InstanceId = aws_instance.database.id }
+  alarm_actions       = local.alarm_actions
+  ok_actions          = local.alarm_actions
+  treat_missing_data  = "missing"
+}
+
+resource "aws_cloudwatch_metric_alarm" "database_disk_write_ops" {
+  alarm_name          = "Database-Disk-WriteOps-High"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = var.alarm_evaluation_periods
+  metric_name         = "DiskWriteOps" 
+  namespace           = "AWS/EC2"      
+  period              = var.alarm_period_seconds
+  statistic           = "Sum" 
+  threshold           = var.disk_write_ops_threshold_per_second * var.alarm_period_seconds 
+  alarm_description   = "This metric monitors EC2 Disk Write Ops for DATABASE."
   dimensions = { InstanceId = aws_instance.database.id }
   alarm_actions = local.alarm_actions
   ok_actions    = local.alarm_actions
 }
-# ... Add Memory, Disk, Network alarms for DATABASE here ...
+
+resource "aws_cloudwatch_metric_alarm" "database_network_out" {
+  alarm_name          = "Database-NetworkOut-High"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = var.alarm_evaluation_periods
+  metric_name         = "NetworkOut"
+  namespace           = "AWS/EC2"
+  period              = var.alarm_period_seconds
+  statistic           = "Sum" 
+  threshold           = var.network_out_bytes_threshold_per_second * var.alarm_period_seconds
+  alarm_description   = "This metric monitors EC2 Network Outgoing Bytes for DATABASE."
+  dimensions = { InstanceId = aws_instance.database.id }
+  alarm_actions = local.alarm_actions
+  ok_actions    = local.alarm_actions
+}

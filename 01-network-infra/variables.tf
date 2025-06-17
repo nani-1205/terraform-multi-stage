@@ -36,7 +36,6 @@ variable "my_ip_cidr" {
   default     = "0.0.0.0/0" # WARNING: Change this to your specific IP/32
 }
 
-# --- Application Ports (for SG rules) ---
 variable "backend_app_port" {
   description = "Port the backend application listens on"
   type        = number
@@ -49,7 +48,6 @@ variable "db_port" {
   default     = 3306
 }
 
-# --- Tag Names for Lookup by Compute Script ---
 variable "vpc_name_tag" {
   description = "Name tag for the VPC (used for lookup)"
   type        = string
@@ -96,4 +94,13 @@ variable "sns_topic_name_tag" {
   description = "Name tag for the SNS topic (used for lookup by compute script)"
   type        = string
   default     = "my-app-alarms-sns-topic"
+}
+
+variable "alarm_notification_emails" {
+  description = "A list of email addresses to subscribe to the SNS alarm topic."
+  type        = list(string)
+  default     = [
+    "prabhakararao.nandigrama@assettl.com",
+    "yetukurisaijagan@gmail.com"
+  ]
 }
