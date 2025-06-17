@@ -87,52 +87,50 @@ variable "db_instance_type" {
   default     = "t3.xlarge"
 }
 
-# --- CloudWatch Alarm Thresholds ---
-variable "cpu_utilization_threshold_critical" {
-  description = "CPU utilization critical threshold percentage"
+# --- CloudWatch Alarm Configuration ---
+variable "alarm_evaluation_periods_fast" {
+  description = "Number of periods to evaluate for fast alarm state (typically 1)"
   type        = number
-  default     = 90 
+  default     = 1
 }
 
-variable "cpu_utilization_threshold_warning" {
-  description = "CPU utilization warning threshold percentage"
+variable "alarm_evaluation_periods_info_warning" { 
+  description = "Number of periods to evaluate for info/warning alarm state"
   type        = number
-  default     = 75 
+  default     = 2 # Can be 1 if you want these fast too, or higher for more stability
 }
 
-variable "memory_utilization_threshold_critical" {
-  description = "Memory utilization critical threshold percentage (requires CloudWatch Agent)"
+variable "alarm_period_seconds_fast_custom_metrics" {
+  description = "Duration in seconds for fast alarms on custom metrics (e.g., Memory via CWAgent). CWAgent must publish at this rate."
   type        = number
-  default     = 90
+  default     = 10 
 }
 
-variable "memory_utilization_threshold_warning" { # Added for consistency
-  description = "Memory utilization warning threshold percentage (requires CloudWatch Agent)"
+variable "alarm_period_seconds_standard_ec2_metrics" {
+  description = "Duration in seconds for alarms on standard EC2 metrics (min 60 for 1-min resolution)."
   type        = number
-  default     = 75
+  default     = 60 
 }
 
+# --- Thresholds ---
+variable "cpu_threshold_level_info" { type = number; default = 20 }      # Info
+variable "cpu_threshold_level_low_warning" { type = number; default = 50 } # Low Warning
+variable "cpu_threshold_level_warning" { type = number; default = 75 }   # Warning
+variable "cpu_threshold_level_critical" { type = number; default = 90 }  # Critical
 
-variable "disk_write_ops_threshold_per_second" { 
-  description = "Disk Write Operations threshold (Count/Second) for alarms"
+variable "memory_threshold_level_info" { type = number; default = 20 }      # Info (CWAgent)
+variable "memory_threshold_level_low_warning" { type = number; default = 50 } # Low Warning (CWAgent)
+variable "memory_threshold_level_warning" { type = number; default = 75 }   # Warning (CWAgent)
+variable "memory_threshold_level_critical" { type = number; default = 90 }  # Critical (CWAgent)
+
+variable "disk_write_ops_threshold_per_second_critical" { 
+  description = "Disk Write Operations critical threshold (Count/Second) for alarms"
   type        = number
-  default     = 500 # Example value, adjust based on your needs
+  default     = 1000 
 }
 
-variable "network_out_bytes_threshold_per_second" { 
-  description = "Network Outgoing Bytes threshold (Bytes/Second) for alarms"
+variable "network_out_bytes_threshold_per_second_critical" { 
+  description = "Network Outgoing Bytes critical threshold (Bytes/Second) for alarms"
   type        = number
-  default     = 100 * 1024 * 1024 # 100 MB/s, example value
-}
-
-variable "alarm_evaluation_periods" {
-  description = "Number of periods to evaluate for the alarm state"
-  type        = number
-  default     = 2
-}
-
-variable "alarm_period_seconds" {
-  description = "Duration in seconds over which the statistic is applied"
-  type        = number
-  default     = 300 
+  default     = 250 * 1024 * 1024 # 250 MB/s
 }
