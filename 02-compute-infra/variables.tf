@@ -97,7 +97,7 @@ variable "alarm_evaluation_periods_fast" {
 variable "alarm_evaluation_periods_info_warning" { 
   description = "Number of periods to evaluate for info/warning alarm state"
   type        = number
-  default     = 2 # Can be 1 if you want these fast too, or higher for more stability
+  default     = 2 
 }
 
 variable "alarm_period_seconds_fast_custom_metrics" {
@@ -113,15 +113,53 @@ variable "alarm_period_seconds_standard_ec2_metrics" {
 }
 
 # --- Thresholds ---
-variable "cpu_threshold_level_info" { type = number; default = 20 }      # Info
-variable "cpu_threshold_level_low_warning" { type = number; default = 50 } # Low Warning
-variable "cpu_threshold_level_warning" { type = number; default = 75 }   # Warning
-variable "cpu_threshold_level_critical" { type = number; default = 90 }  # Critical
+variable "cpu_threshold_level_info" {
+  description = "CPU utilization info threshold (20%)"
+  type        = number
+  default     = 20
+} 
 
-variable "memory_threshold_level_info" { type = number; default = 20 }      # Info (CWAgent)
-variable "memory_threshold_level_low_warning" { type = number; default = 50 } # Low Warning (CWAgent)
-variable "memory_threshold_level_warning" { type = number; default = 75 }   # Warning (CWAgent)
-variable "memory_threshold_level_critical" { type = number; default = 90 }  # Critical (CWAgent)
+variable "cpu_threshold_level_low_warning" {
+  description = "CPU utilization low warning threshold (50%)"
+  type        = number
+  default     = 50
+} 
+
+variable "cpu_threshold_level_warning" {
+  description = "CPU utilization warning threshold (75%)"
+  type        = number
+  default     = 75
+}   
+
+variable "cpu_threshold_level_critical" {
+  description = "CPU utilization critical threshold (90%)"
+  type        = number
+  default     = 90
+}  
+
+variable "memory_threshold_level_info" {
+  description = "Memory utilization info threshold (20%, CWAgent)"
+  type        = number
+  default     = 20
+}      
+
+variable "memory_threshold_level_low_warning" {
+  description = "Memory utilization low warning threshold (50%, CWAgent)"
+  type        = number
+  default     = 50
+} 
+
+variable "memory_threshold_level_warning" {
+  description = "Memory utilization warning threshold (75%, CWAgent)"
+  type        = number
+  default     = 75
+}   
+
+variable "memory_threshold_level_critical" {
+  description = "Memory utilization critical threshold (90%, CWAgent)"
+  type        = number
+  default     = 90
+}  
 
 variable "disk_write_ops_threshold_per_second_critical" { 
   description = "Disk Write Operations critical threshold (Count/Second) for alarms"
